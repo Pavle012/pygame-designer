@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { X, Copy, Check } from 'lucide-react';
-import type { Shape } from '../types';
+import type { Shape, ProjectSettings } from '../types';
 import { generatePygameCode } from '../utils/codeGen';
 import type { CodeGenOptions } from '../utils/codeGen';
 
 interface CodePreviewProps {
   shapes: Shape[];
+  settings: ProjectSettings;
   onClose: () => void;
 }
 
-const CodePreview: React.FC<CodePreviewProps> = ({ shapes, onClose }) => {
+const CodePreview: React.FC<CodePreviewProps> = ({ shapes, settings, onClose }) => {
   const [options, setOptions] = useState<CodeGenOptions>({
     importAlias: 'pg',
     fullScript: true,
@@ -17,7 +18,7 @@ const CodePreview: React.FC<CodePreviewProps> = ({ shapes, onClose }) => {
   });
   const [copied, setCopied] = useState(false);
 
-  const code = generatePygameCode(shapes, options);
+  const code = generatePygameCode(shapes, settings, options);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(code);

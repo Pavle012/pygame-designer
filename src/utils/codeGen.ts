@@ -1,4 +1,4 @@
-import type { Shape } from '../types';
+import type { Shape, ProjectSettings } from '../types';
 
 export interface CodeGenOptions {
   importAlias: string; // 'pygame' or 'pg'
@@ -13,7 +13,7 @@ const hexToRgb = (hex: string) => {
     : '(255, 255, 255)';
 };
 
-export const generatePygameCode = (shapes: Shape[], options: CodeGenOptions): string => {
+export const generatePygameCode = (shapes: Shape[], settings: ProjectSettings, options: CodeGenOptions): string => {
   const { importAlias, fullScript, pygamebg } = options;
   const pg = importAlias;
 
@@ -24,7 +24,8 @@ export const generatePygameCode = (shapes: Shape[], options: CodeGenOptions): st
     if (pygamebg) lines.push('import pygamebg');
     lines.push('');
     lines.push(`${pg}.init()`);
-    lines.push('screen = screen = pygame.display.set_mode((800, 600))');
+    lines.push(`screen = ${pg}.display.set_mode((${settings.screenWidth}, ${settings.screenHeight}))`);
+    lines.push(`${pg}.display.set_caption("Pygame Designer Output")`);
     lines.push('clock = pygame.time.Clock()');
     lines.push('running = True');
     lines.push('');
@@ -43,24 +44,34 @@ export const generatePygameCode = (shapes: Shape[], options: CodeGenOptions): st
     if (!shape.visible) return;
 
     const color = hexToRgb(shape.fill);
-    const strokeWidth = shape.strokeWidth || 0;
+    const width = shape.width;
 
     switch (shape.type) {
       case 'rect':
-        lines.push(`${indent}${pg}.draw.rect(screen, ${color}, (${Math.round(shape.x)}, ${Math.round(shape.y)}, ${Math.round(shape.width)}, ${Math.round(shape.height)}), ${strokeWidth})`);
+        lines.push(`${indent}${pg}.draw.rect(screen, ${color}, (${Math.round(shape.x)}, ${Math.round(shape.y)}, ${Math.round(shape.rectWidth)}, ${Math.round(shape.rectHeight)}), ${width})`);
         break;
       case 'circle':
-        lines.push(`${indent}${pg}.draw.circle(screen, ${color}, (${Math.round(shape.x)}, ${Math.round(shape.y)}), ${Math.round(shape.radius)}, ${strokeWidth})`);
+        lines.push(`${indent}${pg}.draw.circle(screen, ${color}, (${Math.round(shape.x)}, ${Math.round(shape.y)}), ${Math.round(shape.radius)}, ${width})`);
         break;
       case 'ellipse':
-        lines.push(`${indent}${pg}.draw.ellipse(screen, ${color}, (${Math.round(shape.x - shape.radiusX)}, ${Math.round(shape.y - shape.radiusY)}, ${Math.round(shape.radiusX * 2)}, ${Math.round(shape.radiusY * 2)}), ${strokeWidth})`);
+        lines.push(`${indent}${pg}.draw.ellipse(screen, ${color}, (${Math.round(shape.x - shape.radiusX)}, ${Math.round(shape.y - shape.radiusY)}, ${Math.round(shape.radiusX * 2)}, ${Math.round(shape.radiusY * 2)}), ${width})`);
         break;
       case 'line':
         const x1 = Math.round(shape.x + shape.points[0]);
         const y1 = Math.round(shape.y + shape.points[1]);
         const x2 = Math.round(shape.x + shape.points[2]);
         const y2 = Math.round(shape.y + shape.points[3]);
-        lines.push(`${indent}${pg}.draw.line(screen, ${color}, (${x1}, ${y1}), (${x2}, ${y2}), ${strokeWidth || 1})`);
+        lines.push(`${indent}${pg}.draw.line(screen, ${color}, (${x1}, ${y1}), (${x2}, ${y2}), ${width || 1})`);
+        break;
+      case 'polygon':
+        const polyPoints = [];
+        for (let i = 0; i < shape.points.length; i += 2) {
+          polyPoints.push(`(${Math.round(shape.x + shape.points[i])}, ${Math.round(shape.y + shape.points[i+1])})`);
+        }
+        lines.push(`${indent}${pg}.draw.polygon(screen, ${color}, [${polyPoints.join(', ')}], ${width})`);
+        break;
+      case 'arc':
+        lines.push(`${indent}${pg}.draw.arc(screen, ${color}, (${Math.round(shape.x - shape.arcWidth / 2)}, ${Math.round(shape.y - shape.arcHeight / 2)}, ${Math.round(shape.arcWidth)}, ${Math.round(shape.arcHeight)}), ${shape.startAngle.toFixed(2)}, ${shape.stopAngle.toFixed(2)}, ${width || 1})`);
         break;
       case 'text':
         lines.push(`${indent}# Text rendering requires font initialization`);

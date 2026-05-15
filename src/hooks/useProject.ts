@@ -1,10 +1,15 @@
 import { useState, useCallback } from 'react';
-import type { Shape, ShapeType } from '../types';
+import type { Shape, ShapeType, ProjectSettings } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 export const useProject = () => {
   const [shapes, setShapes] = useState<Shape[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [settings, setSettings] = useState<ProjectSettings>({
+    screenWidth: 500,
+    screenHeight: 500,
+    snapSize: 25,
+  });
   const [history, setHistory] = useState<Shape[][]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
 
@@ -16,7 +21,7 @@ export const useProject = () => {
     setHistoryIndex(newHistory.length - 1);
   }, [history, historyIndex]);
 
-  const addShape = (type: ShapeType, x: number, y: number) => {
+  const addShape = (type: ShapeType, x: number, y: number): string => {
     const id = uuidv4();
     let newShape: Shape;
 
@@ -28,41 +33,54 @@ export const useProject = () => {
       rotation: 0,
       fill: '#3b82f6',
       stroke: '#ffffff',
-      strokeWidth: 0,
+      strokeWidth: 2,
+      width: 0, // Filled by default
       opacity: 1,
       visible: true,
     };
 
     switch (type) {
       case 'rect':
-        newShape = { ...base, width: 100, height: 100, borderRadius: 0 };
+        newShape = { ...base, rectWidth: 1, rectHeight: 1, borderRadius: 0 };
         break;
       case 'circle':
-        newShape = { ...base, radius: 50 };
+        newShape = { ...base, radius: 1 };
         break;
       case 'ellipse':
-        newShape = { ...base, radiusX: 50, radiusY: 30 };
+        newShape = { ...base, radiusX: 1, radiusY: 1 };
         break;
       case 'line':
-        newShape = { ...base, points: [0, 0, 100, 100] };
+        newShape = { ...base, points: [0, 0, 0, 0], width: 2 }; // Lines can't be filled
+        break;
+      case 'polygon':
+        newShape = { ...base, points: [0, 0], isFinished: false };
+        break;
+      case 'arc':
+        newShape = { ...base, arcWidth: 1, arcHeight: 1, startAngle: 0, stopAngle: Math.PI, width: 2 };
         break;
       case 'text':
         newShape = { ...base, text: 'Hello Pygame', fontSize: 24, fontFamily: 'Arial', fontStyle: 'normal' };
         break;
       default:
-        return;
+        return id;
     }
 
     const updatedShapes = [...shapes, newShape];
     setShapes(updatedShapes);
     setSelectedId(id);
-    saveToHistory(updatedShapes);
+    return id;
   };
 
-  const updateShape = (id: string, attrs: Partial<Shape>) => {
-    const updatedShapes = shapes.map((s) => (s.id === id ? { ...s, ...attrs } : s)) as Shape[];
-    setShapes(updatedShapes);
-    saveToHistory(updatedShapes);
+  const finishDrawing = () => {
+    saveToHistory(shapes);
+  };
+
+  const updateShape = (id: string, attrs: Partial<Shape>, skipHistory = false) => {
+    setShapes(prev => {
+      const next = prev.map((s) => (s.id === id ? { ...s, ...attrs } : s)) as Shape[];
+      if (!skipHistory) saveToHistory(next);
+      return next;
+    });
   };
 
   const deleteShape = (id: string) => {
@@ -70,6 +88,10 @@ export const useProject = () => {
     setShapes(updatedShapes);
     setSelectedId(null);
     saveToHistory(updatedShapes);
+  };
+
+  const updateSettings = (newSettings: Partial<ProjectSettings>) => {
+    setSettings((prev) => ({ ...prev, ...newSettings }));
   };
 
   const undo = () => {
@@ -91,12 +113,15 @@ export const useProject = () => {
   return {
     shapes,
     selectedId,
+    settings,
     setSelectedId,
     addShape,
     updateShape,
     deleteShape,
+    updateSettings,
     undo,
     redo,
+    finishDrawing,
     canUndo: historyIndex > 0,
     canRedo: historyIndex < history.length - 1,
   };

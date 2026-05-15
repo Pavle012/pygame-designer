@@ -1,4 +1,4 @@
-export type ShapeType = 'rect' | 'circle' | 'line' | 'ellipse' | 'polygon' | 'text' | 'image';
+export type ShapeType = 'rect' | 'circle' | 'line' | 'ellipse' | 'polygon' | 'arc' | 'text' | 'image';
 
 export interface BaseShape {
   id: string;
@@ -11,12 +11,13 @@ export interface BaseShape {
   strokeWidth: number;
   opacity: number;
   visible: boolean;
+  width: number; // For pygame.draw width param: 0 = filled
 }
 
 export interface RectShape extends BaseShape {
   type: 'rect';
-  width: number;
-  height: number;
+  rectWidth: number;
+  rectHeight: number;
   borderRadius: number;
 }
 
@@ -39,6 +40,15 @@ export interface LineShape extends BaseShape {
 export interface PolygonShape extends BaseShape {
   type: 'polygon';
   points: number[];
+  isFinished: boolean;
+}
+
+export interface ArcShape extends BaseShape {
+  type: 'arc';
+  arcWidth: number;
+  arcHeight: number;
+  startAngle: number;
+  stopAngle: number;
 }
 
 export interface TextShape extends BaseShape {
@@ -52,13 +62,20 @@ export interface TextShape extends BaseShape {
 export interface ImageShape extends BaseShape {
   type: 'image';
   src: string;
-  width: number;
-  height: number;
+  imgWidth: number;
+  imgHeight: number;
 }
 
-export type Shape = RectShape | CircleShape | EllipseShape | LineShape | PolygonShape | TextShape | ImageShape;
+export type Shape = RectShape | CircleShape | EllipseShape | LineShape | PolygonShape | ArcShape | TextShape | ImageShape;
+
+export interface ProjectSettings {
+  screenWidth: number;
+  screenHeight: number;
+  snapSize: number;
+}
 
 export interface ProjectState {
   shapes: Shape[];
   selectedId: string | null;
+  settings: ProjectSettings;
 }

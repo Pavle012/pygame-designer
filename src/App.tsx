@@ -4,33 +4,35 @@ import Canvas from './components/Canvas';
 import PropertiesPanel from './components/PropertiesPanel';
 import CodePreview from './components/CodePreview';
 import { useProject } from './hooks/useProject';
+import type { ShapeType } from './types';
 
 function App() {
   const {
     shapes,
     selectedId,
+    settings,
     setSelectedId,
     addShape,
     updateShape,
     deleteShape,
+    updateSettings,
     undo,
     redo,
+    finishDrawing,
     canUndo,
     canRedo
   } = useProject();
 
   const [showCode, setShowCode] = useState(false);
-
-  const handleAddShape = (type: any) => {
-    addShape(type, 150, 150);
-  };
+  const [activeTool, setActiveTool] = useState<ShapeType | 'select'>('select');
 
   const selectedShape = shapes.find(s => s.id === selectedId) || null;
 
   return (
     <div className="flex h-screen w-screen bg-slate-950 text-slate-200 overflow-hidden select-none">
       <Toolbar 
-        onAddShape={handleAddShape}
+        activeTool={activeTool}
+        onSetTool={setActiveTool}
         onUndo={undo}
         onRedo={redo}
         onDelete={() => selectedId && deleteShape(selectedId)}
@@ -46,6 +48,9 @@ function App() {
             <h1 className="font-bold text-lg tracking-tight bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
               Pygame Designer
             </h1>
+            <span className="text-[10px] font-mono bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded border border-slate-700">
+              v1.0.0
+            </span>
           </div>
           <div className="flex gap-2">
             <button 
@@ -60,24 +65,31 @@ function App() {
         <Canvas 
           shapes={shapes}
           selectedId={selectedId}
+          activeTool={activeTool}
+          settings={settings}
           onSelect={setSelectedId}
           onUpdate={updateShape}
+          onAdd={addShape}
+          onFinishDrawing={finishDrawing}
         />
       </main>
 
       <aside className="w-[300px] border-l border-slate-800 bg-slate-900 flex flex-col shadow-2xl z-20">
         <div className="p-4 border-b border-slate-800 bg-slate-800/30">
-          <h2 className="font-bold text-slate-400 uppercase text-[10px] tracking-[0.2em]">Properties</h2>
+          <h2 className="font-bold text-slate-400 uppercase text-[10px] tracking-[0.2em]">Project & Properties</h2>
         </div>
         <PropertiesPanel 
           selectedShape={selectedShape}
+          settings={settings}
           onUpdate={updateShape}
+          onUpdateSettings={updateSettings}
         />
       </aside>
 
       {showCode && (
         <CodePreview 
           shapes={shapes}
+          settings={settings}
           onClose={() => setShowCode(false)}
         />
       )}

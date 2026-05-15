@@ -14,7 +14,8 @@ import {
 import type { ShapeType } from '../types';
 
 interface ToolbarProps {
-  onAddShape: (type: ShapeType) => void;
+  activeTool: ShapeType | 'select';
+  onSetTool: (tool: ShapeType | 'select') => void;
   onUndo: () => void;
   onRedo: () => void;
   onDelete: () => void;
@@ -24,7 +25,8 @@ interface ToolbarProps {
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({ 
-  onAddShape, 
+  activeTool,
+  onSetTool,
   onUndo, 
   onRedo, 
   onDelete,
@@ -37,6 +39,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
     { type: 'circle' as ShapeType, icon: <Circle size={20} />, label: 'Circle' },
     { type: 'ellipse' as ShapeType, icon: <Box size={20} />, label: 'Ellipse' },
     { type: 'line' as ShapeType, icon: <Minus size={20} />, label: 'Line' },
+    { type: 'polygon' as ShapeType, icon: <Box size={20} className="rotate-45" />, label: 'Polygon' },
+    { type: 'arc' as ShapeType, icon: <Circle size={20} className="opacity-50" />, label: 'Arc' },
     { type: 'text' as ShapeType, icon: <Type size={20} />, label: 'Text' },
     { type: 'image' as ShapeType, icon: <ImageIcon size={20} />, label: 'Image' },
   ];
@@ -44,7 +48,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
   return (
     <div className="flex flex-col gap-4 p-4 bg-slate-900 border-r border-slate-800 h-full w-16 items-center">
       <div className="flex flex-col gap-2">
-        <button className="p-2 rounded hover:bg-slate-800 text-blue-400" title="Select">
+        <button 
+          onClick={() => onSetTool('select')}
+          className={`p-2 rounded hover:bg-slate-800 transition-colors ${activeTool === 'select' ? 'text-blue-400 bg-slate-800' : 'text-slate-500'}`} 
+          title="Select"
+        >
           <MousePointer2 size={20} />
         </button>
       </div>
@@ -55,8 +63,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
         {tools.map((tool) => (
           <button
             key={tool.type}
-            onClick={() => tool.type === 'image' ? null : onAddShape(tool.type)}
-            className="p-2 rounded hover:bg-slate-800 text-slate-300"
+            onClick={() => onSetTool(tool.type)}
+            className={`p-2 rounded hover:bg-slate-800 transition-colors ${activeTool === tool.type ? 'text-blue-400 bg-slate-800' : 'text-slate-300'}`}
             title={tool.label}
           >
             {tool.icon}
